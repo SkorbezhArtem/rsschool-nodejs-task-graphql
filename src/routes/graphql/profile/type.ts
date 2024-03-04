@@ -7,6 +7,7 @@ import { Environment } from '../types/environment.js';
 
 export const ProfileType = new GraphQLObjectType({
   name: 'Profile',
+  description: 'Profile data',
   fields: () => ({
     id: { type: new GraphQLNonNull(UUIDType) },
     isMale: { type: GraphQLBoolean },
@@ -20,8 +21,8 @@ export const ProfileType = new GraphQLObjectType({
     },
     memberType: {
       type: MemberType as GraphQLObjectType,
-      resolve: async ({ memberTypeId }: Profile, _: unknown, { loaders }: Environment) =>
-        await loaders.memberTypeDataLoader.load(memberTypeId),
+      resolve: async ({ memberTypeId }: Profile, _: unknown, { prisma }: Environment) =>
+        await prisma.memberType.findUnique({ where: { id: memberTypeId } }),
     },
   }),
 });

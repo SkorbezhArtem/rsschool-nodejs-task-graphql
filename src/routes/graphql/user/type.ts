@@ -14,47 +14,46 @@ import { UserSubscription } from '../types/userSubscription.js';
 
 export const UserType = new GraphQLObjectType({
   name: 'User',
+  description: 'User data',
   fields: () => ({
     id: { type: new GraphQLNonNull(UUIDType) },
     name: { type: GraphQLString },
     balance: { type: GraphQLFloat },
     posts: {
       type: new GraphQLList(PostType),
-      resolve: async ({ id }: User, _: unknown, { loaders }: Environment) =>
-        await loaders.postDataLoader.load(id),
+      resolve: async ({ id }: User, _: unknown, { prisma }: Environment) =>
+        await prisma.post.findMany({ where: { authorId: id } }),
     },
     profile: {
       type: ProfileType as GraphQLObjectType,
-      resolve: async ({ id }: User, _: unknown, { loaders }: Environment) =>
-        await loaders.profileDataLoader.load(id),
+      resolve: async ({ id }: User, _: unknown, { prisma }: Environment) =>
+        await prisma.profile.findUnique({ where: { userId: id } }),
     },
     subscribedToUser: {
       type: new GraphQLList(UserType),
-      resolve: async (
-        { subscribedToUser }: UserSubscription,
-        _: unknown,
-        { loaders }: Environment,
-      ) => {
-        if (Array.isArray(subscribedToUser) && subscribedToUser.length) {
-          return await loaders.userDataLoader.loadMany(
-            subscribedToUser.map(({ subscriberId }) => subscriberId),
-          );
-        }
-      },
+      resolve: async ({ id }: User, __: unknown, { prisma }: Environment) =>
+        await prisma.user.findMany({
+          where: {
+            userSubscribedTo: {
+              some: {
+                authorId: id,
+              },
+            },
+          },
+        }),
     },
     userSubscribedTo: {
       type: new GraphQLList(UserType),
-      resolve: async (
-        { userSubscribedTo }: UserSubscription,
-        _: unknown,
-        { loaders }: Environment,
-      ) => {
-        if (Array.isArray(userSubscribedTo) && userSubscribedTo.length) {
-          return await loaders.userDataLoader.loadMany(
-            userSubscribedTo.map(({ authorId }) => authorId),
-          );
-        }
-      },
+      resolve: async ({ id }: User, __: unknown, { prisma }: Environment) =>
+        await prisma.user.findMany({
+          where: {
+            subscribedToUser: {
+              some: {
+                subscriberId: id,
+              },
+            },
+          },
+        }),
     },
   }),
 });
