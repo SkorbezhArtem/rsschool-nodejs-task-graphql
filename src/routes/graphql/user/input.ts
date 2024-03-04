@@ -5,23 +5,23 @@ import {
   GraphQLInputObjectType,
 } from 'graphql';
 
-const commonFields = {
+const userFields = {
   name: { type: GraphQLString },
   balance: { type: GraphQLFloat },
 };
 
-const createUserInput = new GraphQLInputObjectType({
+const CreateUserInput = new GraphQLInputObjectType({
   name: 'CreateUserInput',
   fields: {
+    ...userFields,
     name: { type: new GraphQLNonNull(GraphQLString) },
     balance: { type: new GraphQLNonNull(GraphQLFloat) },
   },
 });
 
-const changeUserInput = new GraphQLInputObjectType({
+const ChangeUserInput = new GraphQLInputObjectType({
   name: 'ChangeUserInput',
-  fields: commonFields,
+  fields: userFields,
 });
 
-export const CreateUserInput = createUserInput;
-export const ChangeUserInput = changeUserInput;
+export { CreateUserInput, ChangeUserInput };

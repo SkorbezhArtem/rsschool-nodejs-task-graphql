@@ -9,6 +9,7 @@ import {
   GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
+  GraphQLFieldResolver,
 } from 'graphql';
 
 export const MemberTypeIdGQLEnum = new GraphQLEnumType({
@@ -19,7 +20,15 @@ export const MemberTypeIdGQLEnum = new GraphQLEnumType({
   },
 });
 
-export const MemberType = new GraphQLObjectType({
+const getProfiles: GraphQLFieldResolver<MemberTypePrisma, Environment> = async (
+  { id }: MemberTypePrisma,
+  _args,
+  { prisma }: Environment,
+) => {
+  return await prisma.profile.findMany({ where: { memberTypeId: id } });
+};
+
+export const MemberType = new GraphQLObjectType<MemberTypePrisma, Environment>({
   name: 'MemberType',
   description: 'MemberType data',
   fields: () => ({
@@ -28,8 +37,7 @@ export const MemberType = new GraphQLObjectType({
     postsLimitPerMonth: { type: GraphQLInt },
     profiles: {
       type: new GraphQLList(ProfileType),
-      resolve: async ({ id }: MemberTypePrisma, __: unknown, { prisma }: Environment) =>
-        await prisma.profile.findMany({ where: { memberTypeId: id } }),
+      resolve: getProfiles,
     },
   }),
 });

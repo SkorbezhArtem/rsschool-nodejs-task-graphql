@@ -1,12 +1,15 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import { createGqlResponseSchema, gqlResponseSchema, graphQLSchema } from './schemas.js';
-import { GraphQLError, graphql, parse, validate } from 'graphql';
+import { GraphQLError, graphql, parse, validate, Source } from 'graphql';
+import { getDataLoaders } from './loaders/loader.js';
 import depthLimit from 'graphql-depth-limit';
-import { getDataLoaders } from './loader/loader.js';
+
+interface GraphQLRequest {
+  query: string;
+  variables?: Record<string, unknown>;
+}
 
 const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
-  const { prisma } = fastify;
-
   fastify.route({
     url: '/',
     method: 'POST',
@@ -16,37 +19,41 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
         200: gqlResponseSchema,
       },
     },
-
     async handler(req) {
-      const { query, variables } = req.body;
+      const { prisma } = fastify;
+      const { query, variables }: GraphQLRequest = req.body;
+      const loaders = getDataLoaders(prisma);
 
       try {
-        const validationErrors = validate(graphQLSchema, parse(query), [depthLimit(5)]);
+        const validationErrors = validate(graphQLSchema, parse(new Source(query)), [
+          depthLimit(5),
+        ]);
 
         if (validationErrors.length) {
-          console.log('Maximum depth exceeded: 5');
+          console.log('Maximum depth: 5');
           return { errors: validationErrors };
         }
 
         const { data, errors } = await graphql({
           schema: graphQLSchema,
-          source: query,
+          source: new Source(query),
           variableValues: variables,
-          contextValue: {
-            prisma,
-          },
+          contextValue: { prisma, loaders },
         });
 
         return { data, errors };
-      } catch (error) {
-        if (error instanceof GraphQLError) {
-          console.log('Error of GraphQL request:', error.message);
-        }
-
-        return { errors: [error] };
+      } catch (e) {
+        handleGraphQLError(e as Error);
+        return { errors: [e] };
       }
     },
   });
+
+  function handleGraphQLError(error: Error) {
+    if (error instanceof GraphQLError) {
+      console.log('Error GQL request:', error.message);
+    }
+  }
 };
 
 export default plugin;

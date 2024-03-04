@@ -1,4 +1,26 @@
-type PostType = {
+interface BaseEntity {
+  id: string;
+}
+
+type UserType = BaseEntity & {
+  name: string;
+  balance: number;
+};
+
+export type CreateUserInputType = {
+  dto: UserType;
+};
+
+export type ChangeUserInputType = {
+  id: string;
+  dto: UserType;
+};
+
+export type DeleteUserInputType = {
+  id: string;
+};
+
+type PostType = BaseEntity & {
   title: string;
   content: string;
   authorId: string;
@@ -17,7 +39,7 @@ export type DeletePostInputType = {
   id: string;
 };
 
-type ProfileType = {
+type ProfileType = BaseEntity & {
   isMale: boolean;
   yearOfBirth: number;
   memberTypeId: string;
@@ -34,24 +56,6 @@ export type ChangeProfileInputType = {
 };
 
 export type DeleteProfileInputType = {
-  id: string;
-};
-
-type UserType = {
-  name: string;
-  balance: number;
-};
-
-export type CreateUserInputType = {
-  dto: UserType;
-};
-
-export type ChangeUserInputType = {
-  id: string;
-  dto: UserType;
-};
-
-export type DeleteUserInputType = {
   id: string;
 };
 

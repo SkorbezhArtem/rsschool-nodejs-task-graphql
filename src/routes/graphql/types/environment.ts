@@ -1,4 +1,4 @@
-import { DataLoaders } from '../loader/types.js';
+import { DataLoaders } from '../loaders/types.js';
 import { PrismaClient } from '@prisma/client';
 
 export type Environment = {

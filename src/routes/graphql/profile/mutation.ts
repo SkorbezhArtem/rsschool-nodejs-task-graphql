@@ -21,54 +21,61 @@ const profileInputFields = {
   memberTypeId: { type: MemberTypeIdGQLEnum },
 };
 
+const commonProfileInputFields = {
+  userId: { type: UUIDType },
+  ...profileInputFields,
+};
+
 const CreateProfileInput = new GraphQLInputObjectType({
   name: 'CreateProfileInput',
-  fields: () => ({
-    userId: { type: UUIDType },
-    ...profileInputFields,
-  }),
+  fields: () => commonProfileInputFields,
 });
 
-const ChangeProfileInput = new GraphQLInputObjectType({
-  name: 'ChangeProfileInput',
-  fields: () => ({ ...profileInputFields }),
-});
+const createProfileResolver = async (
+  _: unknown,
+  { dto }: CreateProfileInputType,
+  { prisma }: Environment,
+) => await prisma.profile.create({ data: dto });
 
-const createProfile = {
-  type: ProfileType as GraphQLObjectType,
-  args: { dto: { type: new GraphQLNonNull(CreateProfileInput) } },
-  resolve: async (_: unknown, { dto }: CreateProfileInputType, { prisma }: Environment) =>
-    await prisma.profile.create({ data: dto }),
-};
+const changeProfileResolver = async (
+  _: unknown,
+  { id, dto }: { id: string; dto: ChangeProfileInputType },
+  { prisma }: Environment,
+) => await prisma.profile.update({ where: { id }, data: dto });
 
-const changeProfile = {
-  type: ProfileType as GraphQLObjectType,
-  args: {
-    id: { type: new GraphQLNonNull(UUIDType) },
-    dto: { type: ChangeProfileInput },
-  },
-  resolve: async (
-    _: unknown,
-    { id, dto }: { id: string; dto: ChangeProfileInputType },
-    { prisma }: Environment,
-  ) => await prisma.profile.update({ where: { id }, data: dto }),
-};
-
-const deleteProfile = {
-  type: UUIDType,
-  args: { id: { type: new GraphQLNonNull(UUIDType) } },
-  resolve: async (
-    _: unknown,
-    { id }: DeleteProfileInputType,
-    { prisma }: Environment,
-  ) => {
-    await prisma.profile.delete({ where: { id } });
-    return id;
-  },
+const deleteProfileResolver = async (
+  _: unknown,
+  { id }: DeleteProfileInputType,
+  { prisma }: Environment,
+) => {
+  await prisma.profile.delete({ where: { id } });
+  return id;
 };
 
 export const ProfileMutations = {
-  createProfile,
-  changeProfile,
-  deleteProfile,
+  createProfile: {
+    type: ProfileType as GraphQLObjectType,
+    args: { dto: { type: new GraphQLNonNull(CreateProfileInput) } },
+    resolve: createProfileResolver,
+  },
+
+  changeProfile: {
+    type: ProfileType as GraphQLObjectType,
+    args: {
+      id: { type: new GraphQLNonNull(UUIDType) },
+      dto: {
+        type: new GraphQLInputObjectType({
+          name: 'ChangeProfileInput',
+          fields: profileInputFields,
+        }),
+      },
+    },
+    resolve: changeProfileResolver,
+  },
+
+  deleteProfile: {
+    type: UUIDType,
+    args: { id: { type: new GraphQLNonNull(UUIDType) } },
+    resolve: deleteProfileResolver,
+  },
 };

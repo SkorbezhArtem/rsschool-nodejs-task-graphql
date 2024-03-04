@@ -1,25 +1,26 @@
 import { GraphQLList, GraphQLNonNull, GraphQLObjectType } from 'graphql';
-import { ProfileType } from './type.js';
 import { UUIDType } from '../types/uuid.js';
-import { Profile } from '@prisma/client';
+import { ProfileType } from './type.js';
 import { Environment } from '../types/environment.js';
+import { Profile } from '@prisma/client';
 
-const profiles = {
-  type: new GraphQLList(ProfileType),
-  resolve: async (_: unknown, __: unknown, { prisma }: Environment) =>
-    await prisma.profile.findMany(),
-};
+const getProfilesResolver = async (_: unknown, __: unknown, { prisma }: Environment) =>
+  await prisma.profile.findMany();
 
-const profile = {
-  type: ProfileType as GraphQLObjectType,
-  args: {
-    id: { type: new GraphQLNonNull(UUIDType) },
-  },
-  resolve: async (_: unknown, { id }: Profile, { prisma }: Environment) =>
-    await prisma.profile.findUnique({ where: { id } }),
-};
+const getProfileResolver = async (_: unknown, { id }: Profile, { prisma }: Environment) =>
+  await prisma.profile.findUnique({ where: { id } });
 
 export const ProfileRequest = {
-  profiles,
-  profile,
+  profiles: {
+    type: new GraphQLList(ProfileType),
+    resolve: getProfilesResolver,
+  },
+
+  profile: {
+    type: ProfileType as GraphQLObjectType,
+    args: {
+      id: { type: new GraphQLNonNull(UUIDType) },
+    },
+    resolve: getProfileResolver,
+  },
 };

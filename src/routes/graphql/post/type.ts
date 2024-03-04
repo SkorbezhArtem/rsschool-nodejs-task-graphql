@@ -4,7 +4,10 @@ import { UserType } from '../user/type.js';
 import { Post } from '@prisma/client';
 import { Environment } from '../types/environment.js';
 
-export const PostType = new GraphQLObjectType({
+const resolveAuthor = async ({ authorId }: Post, _: unknown, { prisma }: Environment) =>
+  prisma.user.findUnique({ where: { id: authorId } });
+
+export const PostType = new GraphQLObjectType<Post, Environment>({
   name: 'Post',
   description: 'Post data',
   fields: () => ({
@@ -14,8 +17,7 @@ export const PostType = new GraphQLObjectType({
     authorId: { type: new GraphQLNonNull(UUIDType) },
     author: {
       type: UserType as GraphQLObjectType,
-      resolve: async ({ authorId }: Post, _: unknown, { prisma }: Environment) =>
-        prisma.user.findUnique({ where: { id: authorId } }),
+      resolve: resolveAuthor,
     },
   }),
 });

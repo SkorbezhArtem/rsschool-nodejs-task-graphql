@@ -8,6 +8,13 @@ import { MemberRequest } from './member/query.js';
 import { PostMutations } from './post/mutation.js';
 import { ProfileMutations } from './profile/mutation.js';
 
+const queryFields = {
+  ...UserRequest,
+  ...PostRequest,
+  ...ProfileRequest,
+  ...MemberRequest,
+};
+
 export const gqlResponseSchema = Type.Partial(
   Type.Object({
     data: Type.Any(),
@@ -29,21 +36,18 @@ export const createGqlResponseSchema = {
 
 export const query = new GraphQLObjectType({
   name: 'Query',
-  fields: () => ({
-    ...UserRequest,
-    ...PostRequest,
-    ...ProfileRequest,
-    ...MemberRequest,
-  }),
+  fields: () => queryFields,
 });
+
+const mutationFields = {
+  ...PostMutations,
+  ...UserMutations,
+  ...ProfileMutations,
+};
 
 export const mutation = new GraphQLObjectType({
   name: 'Mutation',
-  fields: {
-    ...PostMutations,
-    ...UserMutations,
-    ...ProfileMutations,
-  },
+  fields: mutationFields,
 });
 
 export const graphQLSchema = new GraphQLSchema({ query, mutation });
