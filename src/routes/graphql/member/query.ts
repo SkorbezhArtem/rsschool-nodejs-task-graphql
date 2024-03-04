@@ -1,24 +1,24 @@
 import { GraphQLList, GraphQLNonNull } from 'graphql';
-import { MemberType, MemberTypeIdEnum } from './type.js';
-import { Context } from '../types/context.js';
+import { MemberType, MemberTypeIdGQLEnum } from './type.js';
+import { Environment } from '../types/environment.js';
 import { MemberType as MemberTypePrisma } from '@prisma/client';
 
-export const MemberTypeQueries = {
-  memberType: {
-    type: new GraphQLNonNull(MemberType),
-    args: {
-      id: { type: new GraphQLNonNull(MemberTypeIdEnum) },
-    },
-    resolve: async (__: unknown, args: MemberTypePrisma, { prisma }: Context) => {
-      const { id } = args;
-      return await prisma.memberType.findUnique({ where: { id } });
-    },
-  },
+const memberTypes = {
+  type: new GraphQLList(MemberType),
+  resolve: async (__: unknown, _: unknown, { prisma }: Environment) =>
+    await prisma.memberType.findMany(),
+};
 
-  memberTypes: {
-    type: new GraphQLList(MemberType),
-    resolve: async (__: unknown, _: unknown, { prisma }: Context) => {
-      return await prisma.memberType.findMany();
-    },
+const memberType = {
+  type: MemberType,
+  args: {
+    id: { type: new GraphQLNonNull(MemberTypeIdGQLEnum) },
   },
+  resolve: async (__: unknown, { id }: MemberTypePrisma, { prisma }: Environment) =>
+    await prisma.memberType.findUnique({ where: { id } }),
+};
+
+export const MemberRequest = {
+  memberTypes,
+  memberType,
 };
