@@ -1,4 +1,4 @@
-import { GraphQLList, GraphQLNonNull } from 'graphql';
+import { GraphQLList, GraphQLNonNull, GraphQLObjectType } from 'graphql';
 import { MemberType, MemberTypeIdGQLEnum } from './type.js';
 import { Environment } from '../types/environment.js';
 import { MemberType as MemberTypePrisma } from '@prisma/client';
@@ -10,7 +10,7 @@ const memberTypes = {
 };
 
 const memberType = {
-  type: MemberType,
+  type: MemberType as GraphQLObjectType,
   args: {
     id: { type: new GraphQLNonNull(MemberTypeIdGQLEnum) },
   },
